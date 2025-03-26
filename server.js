@@ -1,5 +1,5 @@
 const express = require('express')
-const modelo = require('./modelo.js');
+const modelo = require('./modelo');
 
 const app = express()
 app.use(express.urlencoded({ extended: true }))
@@ -7,9 +7,9 @@ app.use(express.static('public'));
 app.set('views', './visao');
 app.set('view engine', 'ejs');
 
-app.get('/', (req, res) => {
+app.get('/',async  (req, res) => {
   try {
-    const perguntas = modelo.listar_perguntas();
+    const perguntas =await  modelo.listar_perguntas();
     res.render('index', {
       perguntas: perguntas
     });
@@ -19,14 +19,17 @@ app.get('/', (req, res) => {
   }
 });
 
-app.post('/perguntas', (req, res) => {
+app.post('/perguntas', async (req, res) => {
   try {
-    modelo.cadastrar_pergunta(req.body.pergunta);
+    const pergunta = req.body.pergunta;
+    if (!pergunta || pergunta.trim() === '') {
+      return res.status(400).send('A pergunta não pode estar vazia.');
+    }
+    await modelo.cadastrar_pergunta(pergunta);
     res.render('pergunta-sucesso');
+  } catch (erro) {
+    res.status(500).json(erro.message);
   }
-  catch(erro) {
-    res.status(500).json(erro.message); 
-  } 
 });
 
 app.get('/respostas', (req, res) => {
@@ -44,11 +47,11 @@ app.get('/respostas', (req, res) => {
   } 
 });
 
-app.post('/respostas', (req, res) => {
+app.post('/respostas', async (req, res) => {
   try {
     const id_pergunta = req.body.id_pergunta;
     const resposta = req.body.resposta;
-    modelo.cadastrar_resposta(id_pergunta, resposta);
+    await modelo.cadastrar_resposta(id_pergunta, resposta);
     res.render('resposta-sucesso', {
       id_pergunta: id_pergunta
     });
