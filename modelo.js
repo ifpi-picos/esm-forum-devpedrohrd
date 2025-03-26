@@ -1,10 +1,10 @@
-var bd = require('./bd/bd_utils.js');
+// Começa importando o repositório padrão (Banco de Dados real)
+var repositorio = require('./repositorio/repositorio_bd.js');
 
-// usada pelo teste de unidade
-// para que o modelo passe a usar uma versão "mockada" de bd
-function reconfig_bd(mock_bd) {
-  bd = mock_bd;
-}
+// usada pelos testes para trocar o repositório padrão pelo de memória
+const reconfig_repositorio = (novo_repositorio) => {
+  repositorio = novo_repositorio;
+};
 
 // listar_perguntas retorna um array de objetos com os seguintes campos:
 // { id_pergunta: int
@@ -12,36 +12,30 @@ function reconfig_bd(mock_bd) {
 //   id_usuario: int
 //   num_respostas: int 
 // }
-function listar_perguntas() {
-  const perguntas = bd.queryAll('select * from perguntas', []);
-  perguntas.forEach(pergunta => pergunta['num_respostas'] = get_num_respostas(pergunta['id_pergunta']));
+const listar_perguntas = () => {
+  const perguntas = repositorio.recuperar_todas_perguntas();
+  perguntas.forEach(pergunta => {
+    pergunta['num_respostas'] = repositorio.recuperar_num_respostas(pergunta.id_pergunta);
+  });
   return perguntas;
-}
+};
 
-function cadastrar_pergunta(texto) {
-  const params = [texto, 1];
-  bd.exec('INSERT INTO perguntas (texto, id_usuario) VALUES(?, ?)', params);
-}
+const cadastrar_pergunta = (texto) => {
+  repositorio.criar_pergunta(texto, 1);
+};
 
-function cadastrar_resposta(id_pergunta, texto) {
-  const params = [id_pergunta, texto];
-  bd.exec('INSERT INTO respostas (id_pergunta, texto) VALUES(?, ?)', params);
-}
+const cadastrar_resposta = (id_pergunta, texto) => {
+  repositorio.criar_resposta(id_pergunta, texto);
+};
 
-function get_pergunta(id_pergunta) {
-  return bd.query('select * from perguntas where id_pergunta = ?', [id_pergunta]);
-}
+const get_pergunta = (id_pergunta) => repositorio.recuperar_pergunta(id_pergunta);
 
-function get_respostas(id_pergunta) {
-  return bd.queryAll('select * from respostas where id_pergunta = ?', [id_pergunta]);
-}
+const get_respostas = (id_pergunta) => repositorio.recuperar_todas_respostas(id_pergunta);
 
-function get_num_respostas(id_pergunta) {
-  const resultado = bd.query('select count(*) from respostas where id_pergunta = ?', [id_pergunta]);
-  return resultado['count(*)'];
-}
+const get_num_respostas = (id_pergunta) => repositorio.recuperar_num_respostas(id_pergunta);
 
-exports.reconfig_bd = reconfig_bd;
+// Exportando todas as funções
+exports.reconfig_repositorio = reconfig_repositorio;
 exports.listar_perguntas = listar_perguntas;
 exports.cadastrar_pergunta = cadastrar_pergunta;
 exports.cadastrar_resposta = cadastrar_resposta;
